@@ -20,16 +20,12 @@
         body { 
             background-color: #ffe7e5; 
             font-family: 'Segoe UI', sans-serif; 
-            
-            /* 1. Ensure the body fills the entire dynamic screen height */
             margin: 0; 
             min-height: 100dvh; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             box-sizing: border-box;
-
-            /* 2. Add padding that respects the iPhone Notch and Home bar */
             padding: 15px; 
             padding-top: calc(15px + env(safe-area-inset-top));
             padding-bottom: calc(15px + env(safe-area-inset-bottom));
@@ -85,12 +81,12 @@
 <body>
 
     <div class="controls">
-        <label for="upload" class="upload-label">insert photo here</label>
+        <label for="upload" class="upload-label">Insert Photo</label>
         <input type="file" id="upload" hidden accept="image/*">
-        <button id="download" class="btn-brand">Download photo</button>
+        <button id="download" class="btn-brand">Download Result</button>
 
         <div class="id-input-group">
-            <div class="id-tag">Photo ID</div>
+            <div class="id-tag">ID</div>
             <input type="text" id="photoId" placeholder="Type number...">
             <button id="clearId" class="clear-btn">✕</button>
         </div>
@@ -106,14 +102,15 @@
 
         <div class="selection-container" style="justify-content: space-between;">
             <label><input type="radio" name="ratio" value="square" checked> Square</label>
-            <label><input type="radio" name="ratio" value="landscape"> 4x3 Landscape</label>
-            <label><input type="radio" name="ratio" value="portrait"> 4x3 Portrait</label>
+            <label><input type="radio" name="ratio" value="landscape"> 4:3 ដេក</label>
+            <label><input type="radio" name="ratio" value="portrait"> 4:3 បញ្ឈរ</label>
         </div>
 
         <div class="selection-container" style="justify-content: space-around;">
-            <label><input type="radio" name="wm" value="white" checked> White watermark</label>
-            <label><input type="radio" name="wm" value="purple"> Purple watermark</label>
-            <label><input type="radio" name="wm" value="four-three-wm"> Logo Only</label>
+            <label><input type="radio" name="wm" value="white" checked> White</label>
+            <label><input type="radio" name="wm" value="purple"> Purple</label>
+            <label><input type="radio" name="wm" value="land-wm"> Land. WM</label>
+            <label><input type="radio" name="wm" value="port-wm"> Port. WM</label>
         </div>
     </div>
 
@@ -130,11 +127,13 @@
         const watermarks = { 
             white: new Image(), 
             purple: new Image(),
-            'four-three-wm': new Image() 
+            'land-wm': new Image(),
+            'port-wm': new Image()
         };
         watermarks.white.src = 'white.png';
         watermarks.purple.src = 'purple.png';
-        watermarks['four-three-wm'].src = '4x3.png';
+        watermarks['land-wm'].src = '4x3 landscape.png';
+        watermarks['port-wm'].src = '4x3 portrait.png';
 
         let baseImage = null;
         let imgX = 0, imgY = 0, imgScale = 1;
@@ -176,17 +175,8 @@
             const selectedWM = document.querySelector('input[name="wm"]:checked').value;
             if (watermarks[selectedWM].complete) {
                 const wm = watermarks[selectedWM];
-                if (selectedWM === 'four-three-wm') {
-                    const logoWidthRatio = ratio === 'portrait' ? 0.3 : 0.2;
-                    const logoScale = (canvasW * logoWidthRatio) / wm.width;
-                    const logW = wm.width * logoScale;
-                    const logH = wm.height * logoScale;
-                    const x = (canvasW - logW) / 2;
-                    const y = canvasH - logH - (canvasH * 0.03);
-                    ctx.drawImage(wm, x, y, logW, logH);
-                } else {
-                    ctx.drawImage(wm, 0, 0, canvasW, canvasH);
-                }
+                // Draw all watermarks full-frame as they are now pre-sized
+                ctx.drawImage(wm, 0, 0, canvasW, canvasH);
             }
 
             const rawID = photoId.value.trim();
@@ -196,11 +186,9 @@
             const spacing = refSize * 0.004; 
 
             let currentYOffset = margin;
-            const checkedCategories = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(cb => cb.value);
-
-            checkedCategories.forEach(category => {
+            document.querySelectorAll('input[name="cat"]:checked').forEach(cb => {
                 ctx.font = `500 ${refSize * 0.04}px "SFProMedium"`;
-                const catWidth = ctx.measureText(category).width;
+                const catWidth = ctx.measureText(cb.value).width;
                 const p = refSize * 0.02;
                 ctx.fillStyle = "#9168ad";
                 ctx.beginPath();
@@ -208,7 +196,7 @@
                 ctx.fill();
                 ctx.fillStyle = "white";
                 ctx.textBaseline = "middle";
-                ctx.fillText(category, margin + p, currentYOffset + (badgeHeight / 2));
+                ctx.fillText(cb.value, margin + p, currentYOffset + (badgeHeight / 2));
                 currentYOffset += badgeHeight + spacing;
             });
 
@@ -234,9 +222,11 @@
             const ratio = r.value;
             
             // --- AUTOMATIC WATERMARK SWITCHING ---
-            if (ratio === 'landscape' || ratio === 'portrait') {
-                document.querySelector('input[name="wm"][value="four-three-wm"]').checked = true;
-            } else if (ratio === 'square') {
+            if (ratio === 'landscape') {
+                document.querySelector('input[name="wm"][value="land-wm"]').checked = true;
+            } else if (ratio === 'portrait') {
+                document.querySelector('input[name="wm"][value="port-wm"]').checked = true;
+            } else {
                 document.querySelector('input[name="wm"][value="white"]').checked = true;
             }
 
@@ -326,7 +316,8 @@
 
         watermarks.white.onload = draw; 
         watermarks.purple.onload = draw;
-        watermarks['four-three-wm'].onload = draw;
+        watermarks['land-wm'].onload = draw;
+        watermarks['port-wm'].onload = draw;
         document.fonts.load('10pt "SFProMedium"').then(draw);
     </script>
 </body>
