@@ -10,6 +10,9 @@
     <link rel="manifest" href="site.webmanifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         @font-face { 
@@ -19,7 +22,7 @@
 
         body { 
             background-color: #ffe7e5; 
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: 'Noto Sans Khmer', sans-serif;
             margin: 0; 
             min-height: 100dvh; 
             display: flex; 
@@ -31,6 +34,44 @@
             padding-bottom: calc(15px + env(safe-area-inset-bottom));
             padding-left: calc(15px + env(safe-area-inset-left));
             padding-right: calc(15px + env(safe-area-inset-right));
+        }
+
+        /* --- Unified Dashboard Navigation --- */
+        .nav-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 15px;
+        }
+
+        .btn-nav {
+            background-color: white;
+            color: #9168ad;
+            border: 2px solid #9168ad;
+            padding: 10px 4px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-nav:hover {
+            background-color: #ffe7e5;
+        }
+
+        /* Active highlight styling for current page */
+        .btn-nav.active {
+            background-color: #9168ad;
+            color: white;
+            border-style: solid;
         }
         
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 500px; margin-bottom: 12px; }
@@ -79,6 +120,12 @@
     </style>
 </head>
 <body>
+
+    <div class="nav-group">
+        <a href="#" class="btn-nav active">Watermark</a>
+        <a href="Kimny-invoice/index.html" class="btn-nav">វិក័យប័ត្រឥវ៉ាន់បោះដុំ</a>
+        <a href="#" class="btn-nav" style="border-style: dashed; opacity: 0.7;">វិក័យប័ត្រឥវ៉ាន់តែ ១</a>
+    </div>
 
     <div class="controls">
         <label for="upload" class="upload-label">Insert Photo</label>
@@ -175,7 +222,6 @@
             const selectedWM = document.querySelector('input[name="wm"]:checked').value;
             if (watermarks[selectedWM].complete) {
                 const wm = watermarks[selectedWM];
-                // Draw all watermarks full-frame as they are now pre-sized
                 ctx.drawImage(wm, 0, 0, canvasW, canvasH);
             }
 
@@ -221,7 +267,6 @@
         document.getElementsByName('ratio').forEach(r => r.addEventListener('change', () => {
             const ratio = r.value;
             
-            // --- AUTOMATIC WATERMARK SWITCHING ---
             if (ratio === 'landscape') {
                 document.querySelector('input[name="wm"][value="land-wm"]').checked = true;
             } else if (ratio === 'portrait') {

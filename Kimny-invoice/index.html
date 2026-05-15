@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimny Jewelry Invoice Generator (A5 Portrait)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --bg-theme: #ffe7e5;
+            --purple-theme: #e2bbf7;
+            --dark-purple: #9168ad;
+        }
+
+        body {
+            font-family: 'Noto Sans Khmer', sans-serif;
+            background-color: var(--bg-theme);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Unified Dashboard Navigation --- */
+        .nav-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 750px;
+            margin-bottom: 20px;
+        }
+
+        .btn-nav {
+            background-color: white;
+            color: var(--dark-purple);
+            border: 2px solid var(--dark-purple);
+            padding: 10px 4px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-nav:hover {
+            background-color: var(--bg-theme);
+        }
+
+        /* Active highlight styling for current page */
+        .btn-nav.active {
+            background-color: var(--dark-purple);
+            color: white;
+            border-style: solid;
+        }
+
+        /* --- Web Interface Styles --- */
+        .admin-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 750px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .meta-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-block {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .label-badge {
+            background-color: var(--purple-theme);
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .meta-input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            background-color: var(--purple-theme);
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            filter: brightness(0.95);
+        }
+
+        .grid-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .grid-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .row-num {
+            background-color: var(--purple-theme);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .input-item { flex: 5; width: 0; }
+        .input-qty { flex: 1; min-width: 45px; width: 0; }
+        .input-price { flex: 1.5; min-width: 45px; width: 0; }
+
+        .grid-row input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .inline-badge {
+            background-color: var(--purple-theme);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* --- Invoice Preview Container (A5 Portrait Aspect Ratio) --- */
+        #invoice-container {
+            width: 148mm;
+            height: 210mm;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        #invoice-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 1;
+        }
+
+        #invoice-content-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Pure solid black layout configurations */
+        .printable-text {
+            position: absolute;
+            font-family: 'Noto Sans Khmer', sans-serif;
+            color: #000000 !important;
+            font-weight: bold;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        /* Location 6 (Invoice Number) */
+        #pos-invoice-num {
+            bottom: 26mm;
+            left: 31mm;
+            width: 39mm;
+            text-align: left;
+        }
+
+        /* Location 7 (Date Field) */
+        #pos-date {
+            bottom: 26mm;
+            left: 92mm;
+            width: 52mm;
+            text-align: center;
+        }
+
+        /* Table Alignment Columns Mapping for Portrait Width */
+        .table-row {
+            position: absolute;
+            display: flex;
+            left: 0;
+            right: 0;
+        }
+
+        .col-1 { position: absolute; left: 20mm; width: 54mm; text-align: left; }
+        .col-2 { position: absolute; left: 73mm; width: 15mm; text-align: center; }
+        .col-3 { position: absolute; left: 87mm; width: 22mm; text-align: right; }
+        .col-4 { position: absolute; left: 108mm; width: 32mm; text-align: right; }
+        
+        /* Location 5 (Grand Total) */
+        #pos-total {
+            position: absolute;
+            bottom: 36mm;
+            left: 108mm;
+            width: 32mm;
+            text-align: right;
+            font-weight: bold;
+            font-size: 20px;
+            color: #000000 !important;
+        }
+
+        /* --- Print Mode Configurations --- */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                margin: 0;
+            }
+            .admin-panel {
+                display: none !important;
+            }
+            #invoice-container {
+                box-shadow: none;
+                margin: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                page-break-inside: avoid;
+            }
+            @page {
+                size: A5 portrait;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-panel">
+        <div class="nav-group">
+            <a href="../index.html" class="btn-nav">Watermark</a>
+            <a href="#" class="btn-nav active">វិក័យប័ត្រឥវ៉ាន់បោះដុំ</a>
+            <a href="#" class="btn-nav" style="border-style: dashed; opacity: 0.7;">វិក័យប័ត្រឥវ៉ាន់តែ ១</a>
+        </div>
+
+        <div class="meta-input-group">
+            <div class="input-block">
+                <span class="label-badge">Date</span>
+                <input type="text" id="input-date" placeholder="ថ្ងៃ">
+            </div>
+            <div class="input-block">
+                <span class="label-badge">Invoice Number</span>
+                <input type="text" id="input-id" placeholder="លេខ ឬ ឈ្មោះភ្ញៀវ">
+            </div>
+        </div>
+
+        <div class="action-btns">
+            <button class="btn" onclick="downloadImage()">Download Photo</button>
+            <button class="btn" onclick="window.print()">Print</button>
+        </div>
+
+        <div class="grid-rows" id="input-grid"></div>
+    </div>
+
+    <div id="invoice-container">
+        <img id="invoice-bg" src="invoice.jpg" alt="Invoice Template Baseline">
+
+        <div id="invoice-content-layer">
+            <div id="pos-invoice-num" class="printable-text"></div>
+            <div id="pos-date" class="printable-text"></div>
+
+            <div id="invoice-rows-container"></div>
+
+            <div id="pos-total" class="printable-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        //  TUNING CONTROLS FOR VERTICAL ALIGNMENT
+        // ==========================================
+        const rowStartY = 72.5;   // Distance from top to the FIRST row line (in mm)
+        const rowSpacingY = 7.8;  // Distance BETWEEN each row line (in mm)
+        // ==========================================
+
+        const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+        function toKhmerNumber(num) {
+            return num.toString().split('').map(x => khmerDigits[parseInt(x)] || x).join('');
+        }
+
+        function getKhmerCurrentDate() {
+            const months = [
+                "មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", 
+                "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"
+            ];
+            const now = new Date();
+            const day = toKhmerNumber(now.getDate());
+            const month = months[now.getMonth()];
+            const year = toKhmerNumber(now.getFullYear());
+            
+            return `ថ្ងៃទី ${day} ខែ${month} ឆ្នាំ ${year}`;
+        }
+
+        const gridContainer = document.getElementById('input-grid');
+        const rowsContainer = document.getElementById('invoice-rows-container');
+
+        for(let i = 1; i <= 12; i++) {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'grid-row';
+            rowDiv.innerHTML = `
+                <div class="row-num">${i}</div>
+                <input type="text" class="grid-input input-item" data-row="${i}" placeholder="ទំនិញ...">
+                <span class="inline-badge">amount</span>
+                <input type="number" class="grid-input input-qty" data-row="${i}" min="0" placeholder="0">
+                <span class="inline-badge">price</span>
+                <input type="number" class="grid-input input-price" data-row="${i}" min="0" step="0.01" placeholder="0.00">
+            `;
+            gridContainer.appendChild(rowDiv);
+
+            const previewRow = document.createElement('div');
+            previewRow.className = 'table-row';
+            previewRow.style.top = `${rowStartY + ((i - 1) * rowSpacingY)}mm`;
+            previewRow.innerHTML = `
+                <div class="col-1" id="render-item-${i}"></div>
+                <div class="col-2" id="render-qty-${i}"></div>
+                <div class="col-3" id="render-price-${i}"></div>
+                <div class="col-4" id="render-total-${i}"></div>
+            `;
+            rowsContainer.appendChild(previewRow);
+        }
+
+        document.getElementById('input-date').value = getKhmerCurrentDate();
+        
+        function syncData() {
+            document.getElementById('pos-date').innerText = document.getElementById('input-date').value;
+            document.getElementById('pos-invoice-num').innerText = document.getElementById('input-id').value;
+
+            let grandTotal = 0;
+
+            for(let i = 1; i <= 12; i++) {
+                const itemVal = document.querySelector(`.input-item[data-row="${i}"]`).value.trim();
+                const qtyVal = parseFloat(document.querySelector(`.input-qty[data-row="${i}"]`).value) || 0;
+                const priceVal = parseFloat(document.querySelector(`.input-price[data-row="${i}"]`).value) || 0;
+                
+                let rowTotal = 0;
+                if(qtyVal > 0 && priceVal > 0) {
+                    rowTotal = qtyVal * priceVal;
+                    grandTotal += rowTotal;
+                }
+
+                document.getElementById(`render-item-${i}`).innerText = itemVal !== "" ? itemVal : "N/A";
+                document.getElementById(`render-qty-${i}`).innerText = qtyVal > 0 ? qtyVal : '';
+                document.getElementById(`render-price-${i}`).innerText = priceVal > 0 ? `$${priceVal.toFixed(2)}` : '';
+                document.getElementById(`render-total-${i}`).innerText = rowTotal > 0 ? `$${rowTotal.toFixed(2)}` : '';
+            }
+
+            document.getElementById('pos-total').innerText = grandTotal > 0 ? `$${grandTotal.toFixed(2)}` : '';
+        }
+
+        document.addEventListener('input', syncData);
+        syncData();
+
+        function downloadImage() {
+            const target = document.getElementById('invoice-container');
+            html2canvas(target, {
+                scale: 3, 
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Invoice-${document.getElementById('input-id').value || 'Draft'}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
