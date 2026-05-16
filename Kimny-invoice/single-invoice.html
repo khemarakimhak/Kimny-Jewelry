@@ -160,6 +160,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             overflow: hidden;
             background-color: #fff;
+            transform-origin: top left;
+        }
+
+        /* Responsive Wrapper to prevent layout overlap on Mobile screens */    
+        .preview-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: flex-start;
         }
 
         #invoice-bg {
@@ -210,15 +220,32 @@
         /* Blue Description Box Area Map Boundaries */
         #pos-description-box {
             top: 82mm;
-            left: 8.5mm;
+            left: 12mm;
             width: 70.5mm;
             height: 98mm;
             overflow: hidden;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: normal;
             line-height: 1.6;
             word-wrap: break-word;
             white-space: pre-wrap;
+        }
+
+        /* --- Labor (ឈ្នួល) & Total Layout Mapping Coordinates --- */
+        #pos-labor-box {
+            top: 130mm;       /* Positioned right beneath the description field box */
+            left: 35mm;         /* Adjusted line alignment value to your layout map */
+            width: 48mm;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        #pos-total-box {
+            top: 145mm;       /* Positioned perfectly beneath the labor box row */
+            left: 35mm;
+            width: 48mm;
+            text-align: left;
+            white-space: nowrap;
         }
 
         /* Red Image Container Frame Box Area Map Boundaries (4:3 Portrait) */
@@ -237,7 +264,7 @@
         #render-photo {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Fits to area ratios nicely */
+            object-fit: cover;
             display: none;
             border: 3px solid #9168ad;
             border-radius: 12px;
@@ -299,6 +326,17 @@
 
         <div class="meta-input-group">
             <div class="input-block">
+                <span class="label-badge">ឈ្នួល (Labor Fee)</span>
+                <input type="text" id="input-labor" placeholder="បញ្ជូលតម្លៃឈ្នួល...">
+            </div>
+            <div class="input-block">
+                <span class="label-badge">Total</span>
+                <input type="text" id="input-total" placeholder="បញ្ចូលតម្លៃសរុប...">
+            </div>
+        </div>
+
+        <div class="meta-input-group">
+            <div class="input-block">
                 <div class="file-controls">
                     <label class="btn-upload" for="upload-photo">📁 Choose From Library</label>
                     <input type="file" id="upload-photo" accept="image/*" hidden>
@@ -315,18 +353,23 @@
         </div>
     </div>
 
-    <div id="invoice-container">
-        <img id="invoice-bg" src="single-invoice.jpg" alt="Single Invoice Baseline Template">
+    <div class="preview-scroll-wrapper">
+        <div id="invoice-container">
+            <img id="invoice-bg" src="single-invoice.jpg" alt="Single Invoice Baseline Template">
 
-        <div id="invoice-content-layer">
-            <div id="pos-description-box" class="printable-text"></div>
-            
-            <div id="pos-image-frame">
-                <img id="render-photo" src="#" alt="Render Target View Source">
+            <div id="invoice-content-layer">
+                <div id="pos-description-box" class="printable-text"></div>
+                
+                <div id="pos-image-frame">
+                    <img id="render-photo" src="#" alt="Render Target View Source">
+                </div>
+
+                <div id="pos-labor-box" class="printable-text"></div>
+                <div id="pos-total-box" class="printable-text"></div>
+
+                <div id="pos-invoice-num" class="printable-text"></div>
+                <div id="pos-date" class="printable-text"></div>
             </div>
-
-            <div id="pos-invoice-num" class="printable-text"></div>
-            <div id="pos-date" class="printable-text"></div>
         </div>
     </div>
 
@@ -357,8 +400,47 @@
             document.getElementById('pos-date').innerText = document.getElementById('input-date').value;
             document.getElementById('pos-invoice-num').innerText = document.getElementById('input-id').value;
             document.getElementById('pos-description-box').textContent = document.getElementById('input-description').value;
+            
+            // Sync text content inside the new preview display boxes
+            document.getElementById('pos-labor-box').innerText = document.getElementById('input-labor').value;
+            document.getElementById('pos-total-box').innerText = document.getElementById('input-total').value;
+        }
+        
+        function applyMobileScaling() {
+            const container = document.getElementById('invoice-container');
+            const wrapper = document.querySelector('.preview-scroll-wrapper');
+            
+            if (!container || !wrapper) return;
+
+            // Get the current screen width of your iPhone / Browser window
+            const windowWidth = window.innerWidth - 40; // minus body padding
+            const containerWidth = container.offsetWidth; // This is the 148mm width in pixels
+
+            // If the screen is smaller than the 148mm canvas, scale it down!
+            if (windowWidth < containerWidth) {
+                const scaleFactor = windowWidth / containerWidth;
+                container.style.transform = `scale(${scaleFactor})`;
+                
+                // Fix the wrapper height so it doesn't leave massive blank space below the scaled container
+                wrapper.style.height = `${container.offsetHeight * scaleFactor}px`;
+            } else {
+                // Reset to normal on desktop screens
+                container.style.transform = 'none';
+                wrapper.style.height = 'auto';
+            }
         }
 
+        // Run scale calculation on load and whenever screen rotates
+        window.addEventListener('load', applyMobileScaling);
+        window.addEventListener('resize', applyMobileScaling);
+        
+        // Also fire it right after data syncing to ensure layout locks smoothly
+        const originalSync = syncInvoiceData;
+        syncInvoiceData = function() {
+            originalSync();
+            applyMobileScaling();
+        };
+        
         // Handle Image Stream Sources Safely
         function handleImageUpload(event) {
             const file = event.target.files[0];
@@ -377,6 +459,8 @@
         document.getElementById('input-date').addEventListener('input', syncInvoiceData);
         document.getElementById('input-id').addEventListener('input', syncInvoiceData);
         document.getElementById('input-description').addEventListener('input', syncInvoiceData);
+        document.getElementById('input-labor').addEventListener('input', syncInvoiceData);
+        document.getElementById('input-total').addEventListener('input', syncInvoiceData);
         document.getElementById('upload-photo').addEventListener('change', handleImageUpload);
         document.getElementById('capture-camera').addEventListener('change', handleImageUpload);
 
