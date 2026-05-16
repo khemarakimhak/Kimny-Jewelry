@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimny Jewelry Invoice Generator (A5 Portrait)</title>
+    <title>Kimny Jewelry Single Invoice Generator (A5 Portrait)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;700&display=swap" rel="stylesheet">
@@ -57,14 +57,13 @@
             background-color: var(--bg-theme);
         }
 
-        /* Active highlight styling for current page */
         .btn-nav.active {
             background-color: var(--dark-purple);
             color: white;
             border-style: solid;
         }
 
-        /* --- Web Interface Styles --- */
+        /* --- Workspace Controls Panels --- */
         .admin-panel {
             background: white;
             padding: 20px;
@@ -73,6 +72,7 @@
             max-width: 750px;
             width: 100%;
             margin-bottom: 40px;
+            box-sizing: border-box;
         }
 
         .meta-input-group {
@@ -96,13 +96,38 @@
             margin-bottom: 6px;
         }
 
-        .meta-input-group input {
+        input[type="text"], textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 15px;
+            font-family: 'Noto Sans Khmer', sans-serif;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .file-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .btn-upload {
+            flex: 1;
+            background-color: #f3e8fc;
+            border: 1px dashed var(--dark-purple);
+            color: var(--dark-purple);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
         }
 
         .action-btns {
@@ -127,48 +152,7 @@
             filter: brightness(0.95);
         }
 
-        .grid-rows {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .grid-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .row-num {
-            background-color: var(--purple-theme);
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .input-item { flex: 5; width: 0; }
-        .input-qty { flex: 1; min-width: 45px; width: 0; }
-        .input-price { flex: 1.5; min-width: 45px; width: 0; }
-
-        .grid-row input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        .inline-badge {
-            background-color: var(--purple-theme);
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        /* --- Invoice Preview Container (A5 Portrait Aspect Ratio) --- */
+        /* --- Preview Target Document Blueprint Frame (A5 Layout) --- */
         #invoice-container {
             width: 148mm;
             height: 210mm;
@@ -198,58 +182,69 @@
             pointer-events: none;
         }
 
-        /* Pure solid black layout configurations */
         .printable-text {
             position: absolute;
             font-family: 'Noto Sans Khmer', sans-serif;
             color: #000000 !important;
             font-weight: bold;
             font-size: 15px;
-            white-space: nowrap;
         }
 
-        /* Location 6 (Invoice Number) */
+        /* Fixed Location Mapping Coordinates */
         #pos-invoice-num {
-            bottom: 26mm;
+            bottom: 32.5mm;
             left: 31mm;
             width: 39mm;
             text-align: left;
+            white-space: nowrap;
         }
 
-        /* Location 7 (Date Field) */
         #pos-date {
-            bottom: 26mm;
+            bottom: 32.5mm;
             left: 92mm;
             width: 52mm;
             text-align: center;
+            white-space: nowrap;
         }
 
-        /* Table Alignment Columns Mapping for Portrait Width */
-        .table-row {
+        /* Blue Description Box Area Map Boundaries */
+        #pos-description-box {
+            top: 82mm;
+            left: 8.5mm;
+            width: 70.5mm;
+            height: 98mm;
+            overflow: hidden;
+            font-size: 16px;
+            font-weight: normal;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* Red Image Container Frame Box Area Map Boundaries (4:3 Portrait) */
+        #pos-image-frame {
             position: absolute;
+            top: 73.5mm;
+            left: 83.5mm;
+            width: 55mm;
+            height: 80mm;
+            overflow: hidden;
             display: flex;
-            left: 0;
-            right: 0;
+            align-items: center;
+            justify-content: center;
         }
 
-        .col-1 { position: absolute; left: 20mm; width: 54mm; text-align: left; }
-        .col-2 { position: absolute; left: 73mm; width: 15mm; text-align: center; }
-        .col-3 { position: absolute; left: 87mm; width: 22mm; text-align: right; }
-        .col-4 { position: absolute; left: 108mm; width: 32mm; text-align: right; }
-        
-        /* Location 5 (Grand Total) */
-        #pos-total {
-            position: absolute;
-            bottom: 36mm;
-            left: 108mm;
-            width: 32mm;
-            text-align: right;
-            font-weight: bold;
-            font-size: 20px;
-            color: #000000 !important;
+        #render-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Fits to area ratios nicely */
+            display: none;
+            border: 3px solid #9168ad;
+            border-radius: 12px;
+            box-sizing: border-box;
         }
 
-        /* --- Print Mode Configurations --- */
+        /* --- Print Mode Rule Implementations --- */
         @media print {
             body {
                 background: none;
@@ -279,8 +274,8 @@
     <div class="admin-panel">
         <div class="nav-group">
             <a href="../index.html" class="btn-nav">Watermark</a>
-            <a href="#" class="btn-nav active">វិក័យប័ត្រឥវ៉ាន់បោះដុំ</a>
-            <a href="single-invoice.html" class="btn-nav">វិក័យប័ត្រឥវ៉ាន់តែ ១</a>
+            <a href="index.html" class="btn-nav">វិក័យប័ត្រឥវ៉ាន់បោះដុំ</a>
+            <a href="#" class="btn-nav active">វិក័យប័ត្រឥវ៉ាន់តែ ១</a>
             <a href="#" class="btn-nav">គណនាតម្លៃ</a>
         </div>
 
@@ -295,35 +290,47 @@
             </div>
         </div>
 
+        <div class="meta-input-group">
+            <div class="input-block" style="min-width: 100%;">
+                <span class="label-badge">Item Details / Description</span>
+                <textarea id="input-description" placeholder="បញ្ចូលព័ត៌មានលម្អិតទំនិញនៅទីនេះ..."></textarea>
+            </div>
+        </div>
+
+        <div class="meta-input-group">
+            <div class="input-block">
+                <div class="file-controls">
+                    <label class="btn-upload" for="upload-photo">📁 Choose From Library</label>
+                    <input type="file" id="upload-photo" accept="image/*" hidden>
+                    
+                    <label class="btn-upload" for="capture-camera" style="background-color: #e3f2fd; border-color: #2196f3; color: #1e88e5;">📷 Take Photo Directly</label>
+                    <input type="file" id="capture-camera" accept="image/*" capture="environment" hidden>
+                </div>
+            </div>
+        </div>
+
         <div class="action-btns">
             <button class="btn" onclick="downloadImage()">Download Photo</button>
             <button class="btn" onclick="window.print()">Print</button>
         </div>
-
-        <div class="grid-rows" id="input-grid"></div>
     </div>
 
     <div id="invoice-container">
-        <img id="invoice-bg" src="invoice.jpg" alt="Invoice Template Baseline">
+        <img id="invoice-bg" src="single-invoice.jpg" alt="Single Invoice Baseline Template">
 
         <div id="invoice-content-layer">
+            <div id="pos-description-box" class="printable-text"></div>
+            
+            <div id="pos-image-frame">
+                <img id="render-photo" src="#" alt="Render Target View Source">
+            </div>
+
             <div id="pos-invoice-num" class="printable-text"></div>
             <div id="pos-date" class="printable-text"></div>
-
-            <div id="invoice-rows-container"></div>
-
-            <div id="pos-total" class="printable-text"></div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        //  TUNING CONTROLS FOR VERTICAL ALIGNMENT
-        // ==========================================
-        const rowStartY = 72.5;   // Distance from top to the FIRST row line (in mm)
-        const rowSpacingY = 7.8;  // Distance BETWEEN each row line (in mm)
-        // ==========================================
-
         const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
         function toKhmerNumber(num) {
             return num.toString().split('').map(x => khmerDigits[parseInt(x)] || x).join('');
@@ -342,65 +349,41 @@
             return `ថ្ងៃទី ${day} ខែ${month} ឆ្នាំ ${year}`;
         }
 
-        const gridContainer = document.getElementById('input-grid');
-        const rowsContainer = document.getElementById('invoice-rows-container');
-
-        for(let i = 1; i <= 12; i++) {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'grid-row';
-            rowDiv.innerHTML = `
-                <div class="row-num">${i}</div>
-                <input type="text" class="grid-input input-item" data-row="${i}" placeholder="ទំនិញ...">
-                <span class="inline-badge">amount</span>
-                <input type="number" class="grid-input input-qty" data-row="${i}" min="0" placeholder="0">
-                <span class="inline-badge">price</span>
-                <input type="number" class="grid-input input-price" data-row="${i}" min="0" step="0.01" placeholder="0.00">
-            `;
-            gridContainer.appendChild(rowDiv);
-
-            const previewRow = document.createElement('div');
-            previewRow.className = 'table-row';
-            previewRow.style.top = `${rowStartY + ((i - 1) * rowSpacingY)}mm`;
-            previewRow.innerHTML = `
-                <div class="col-1" id="render-item-${i}"></div>
-                <div class="col-2" id="render-qty-${i}"></div>
-                <div class="col-3" id="render-price-${i}"></div>
-                <div class="col-4" id="render-total-${i}"></div>
-            `;
-            rowsContainer.appendChild(previewRow);
-        }
-
+        // Initialize Automatic Form Data Parameters
         document.getElementById('input-date').value = getKhmerCurrentDate();
-        
-        function syncData() {
+
+        // Sync and Process Real-time Interface Pipeline Data Transformations
+        function syncInvoiceData() {
             document.getElementById('pos-date').innerText = document.getElementById('input-date').value;
             document.getElementById('pos-invoice-num').innerText = document.getElementById('input-id').value;
-
-            let grandTotal = 0;
-
-            for(let i = 1; i <= 12; i++) {
-                const itemVal = document.querySelector(`.input-item[data-row="${i}"]`).value.trim();
-                const qtyVal = parseFloat(document.querySelector(`.input-qty[data-row="${i}"]`).value) || 0;
-                const priceVal = parseFloat(document.querySelector(`.input-price[data-row="${i}"]`).value) || 0;
-                
-                let rowTotal = 0;
-                if(qtyVal > 0 && priceVal > 0) {
-                    rowTotal = qtyVal * priceVal;
-                    grandTotal += rowTotal;
-                }
-
-                document.getElementById(`render-item-${i}`).innerText = itemVal !== "" ? itemVal : "N/A";
-                document.getElementById(`render-qty-${i}`).innerText = qtyVal > 0 ? qtyVal : '';
-                document.getElementById(`render-price-${i}`).innerText = priceVal > 0 ? `$${priceVal.toFixed(2)}` : '';
-                document.getElementById(`render-total-${i}`).innerText = rowTotal > 0 ? `$${rowTotal.toFixed(2)}` : '';
-            }
-
-            document.getElementById('pos-total').innerText = grandTotal > 0 ? `$${grandTotal.toFixed(2)}` : '';
+            document.getElementById('pos-description-box').textContent = document.getElementById('input-description').value;
         }
 
-        document.addEventListener('input', syncData);
-        syncData();
+        // Handle Image Stream Sources Safely
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const renderTarget = document.getElementById('render-photo');
+                    renderTarget.src = e.target.result;
+                    renderTarget.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
 
+        // Event Intercept Tracking Listeners 
+        document.getElementById('input-date').addEventListener('input', syncInvoiceData);
+        document.getElementById('input-id').addEventListener('input', syncInvoiceData);
+        document.getElementById('input-description').addEventListener('input', syncInvoiceData);
+        document.getElementById('upload-photo').addEventListener('change', handleImageUpload);
+        document.getElementById('capture-camera').addEventListener('change', handleImageUpload);
+
+        // Initial Data Frame Sync Pass Execution
+        syncInvoiceData();
+
+        // Image Canvas Frame Export Render Functionality
         function downloadImage() {
             const target = document.getElementById('invoice-container');
             html2canvas(target, {
@@ -409,7 +392,7 @@
                 logging: false
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Invoice-${document.getElementById('input-id').value || 'Draft'}.jpg`;
+                link.download = `SingleInvoice-${document.getElementById('input-id').value || 'Draft'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
             });
