@@ -2,7 +2,7 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kimny Jewelry Single Invoice Generator (A5 Portrait)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +24,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            -webkit-text-size-adjust: 100%; /* Fixes iPhone Safari auto font-bloating bug */
         }
 
         /* --- Unified Dashboard Navigation --- */
@@ -152,7 +153,15 @@
             filter: brightness(0.95);
         }
 
-        /* --- Preview Target Document Blueprint Frame (A5 Layout) --- */
+        /* --- STABLE VIEWPORT PREVIEW SCALING SYSTEM --- */
+        .mobile-view-sandbox {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: visible;
+        }
+
         #invoice-container {
             width: 148mm;
             height: 210mm;
@@ -160,14 +169,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             overflow: hidden;
             background-color: #fff;
+            flex-shrink: 0; /* Prevents iPhone from compressing width coordinates */
+            transform-origin: top center;
         }
 
         #invoice-bg {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 148mm;  /* Lock back to explicit blueprint scales */
+            height: 210mm; /* Lock back to explicit blueprint scales */
             object-fit: fill;
             z-index: 1;
         }
@@ -188,6 +199,7 @@
             color: #000000 !important;
             font-weight: bold;
             font-size: 15px;
+            white-space: nowrap;
         }
 
         /* Fixed Location Mapping Coordinates */
@@ -196,7 +208,6 @@
             left: 31mm;
             width: 39mm;
             text-align: left;
-            white-space: nowrap;
         }
 
         #pos-date {
@@ -204,38 +215,35 @@
             left: 92mm;
             width: 52mm;
             text-align: center;
-            white-space: nowrap;
         }
 
-        /* Blue Description Box Area Map Boundaries */
+        /* Description Content Box Map Boundaries */
         #pos-description-box {
-            top: 82mm;
-            left: 12mm;
+            top: 85mm;
+            left: 10mm;
             width: 70.5mm;
             height: 98mm;
             overflow: hidden;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: normal;
             line-height: 1.6;
             word-wrap: break-word;
             white-space: pre-wrap;
         }
 
-        /* --- Labor (ឈ្នួល) & Total Layout Mapping Coordinates --- */
+        /* Labor & Total Grid Coordinate Maps */
         #pos-labor-box {
-            top: 130mm;       /* Positioned right beneath the description field box */
-            left: 35mm;         /* Adjusted line alignment value to your layout map */
-            width: 48mm;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        #pos-total-box {
-            top: 145mm;       /* Positioned perfectly beneath the labor box row */
+            top: 130mm;
             left: 35mm;
             width: 48mm;
             text-align: left;
-            white-space: nowrap;
+        }
+
+        #pos-total-box {
+            top: 145mm;
+            left: 35mm;
+            width: 48mm;
+            text-align: left;
         }
 
         /* Red Image Container Frame Box Area Map Boundaries (4:3 Portrait) */
@@ -268,7 +276,7 @@
                 padding: 0;
                 margin: 0;
             }
-            .admin-panel {
+            .admin-panel, .mobile-view-sandbox {
                 display: none !important;
             }
             #invoice-container {
@@ -277,6 +285,7 @@
                 position: absolute;
                 top: 0;
                 left: 0;
+                transform: none !important; /* Strips mobile scaling adjustments out for crystal clear prints */
                 page-break-inside: avoid;
             }
             @page {
@@ -343,21 +352,23 @@
         </div>
     </div>
 
-    <div id="invoice-container">
-        <img id="invoice-bg" src="single-invoice.jpg" alt="Single Invoice Baseline Template">
+    <div class="mobile-view-sandbox">
+        <div id="invoice-container">
+            <img id="invoice-bg" src="single-invoice.jpg" alt="Single Invoice Baseline Template">
 
-        <div id="invoice-content-layer">
-            <div id="pos-description-box" class="printable-text"></div>
-            
-            <div id="pos-image-frame">
-                <img id="render-photo" src="#" alt="Render Target View Source">
+            <div id="invoice-content-layer">
+                <div id="pos-description-box" class="printable-text"></div>
+                
+                <div id="pos-image-frame">
+                    <img id="render-photo" src="#" alt="Render Target View Source">
+                </div>
+
+                <div id="pos-labor-box" class="printable-text"></div>
+                <div id="pos-total-box" class="printable-text"></div>
+
+                <div id="pos-invoice-num" class="printable-text"></div>
+                <div id="pos-date" class="printable-text"></div>
             </div>
-
-            <div id="pos-labor-box" class="printable-text"></div>
-            <div id="pos-total-box" class="printable-text"></div>
-
-            <div id="pos-invoice-num" class="printable-text"></div>
-            <div id="pos-date" class="printable-text"></div>
         </div>
     </div>
 
@@ -380,21 +391,38 @@
             return `ថ្ងៃទី ${day} ខែ${month} ឆ្នាំ ${year}`;
         }
 
-        // Initialize Automatic Form Data Parameters
         document.getElementById('input-date').value = getKhmerCurrentDate();
 
-        // Sync and Process Real-time Interface Pipeline Data Transformations
         function syncInvoiceData() {
             document.getElementById('pos-date').innerText = document.getElementById('input-date').value;
             document.getElementById('pos-invoice-num').innerText = document.getElementById('input-id').value;
             document.getElementById('pos-description-box').textContent = document.getElementById('input-description').value;
-            
-            // Sync text content inside the new preview display boxes
             document.getElementById('pos-labor-box').innerText = document.getElementById('input-labor').value;
             document.getElementById('pos-total-box').innerText = document.getElementById('input-total').value;
+            
+            autoScaleViewport();
         }
 
-        // Handle Image Stream Sources Safely
+        function autoScaleViewport() {
+            const container = document.getElementById('invoice-container');
+            const sandbox = document.querySelector('.mobile-view-sandbox');
+            if (!container || !sandbox) return;
+
+            // Reset transform to accurately pull target dimensions
+            container.style.transform = 'none';
+            sandbox.style.height = 'auto';
+
+            const maxWidth = sandbox.offsetWidth;
+            const targetWidth = container.offsetWidth;
+
+            if (maxWidth < targetWidth) {
+                const proportionRatio = maxWidth / targetWidth;
+                container.style.transform = `scale(${proportionRatio})`;
+                // Locks sandbox boundary tracking so text elements below it don't overlap layout frames
+                sandbox.style.height = `${container.offsetHeight * proportionRatio}px`;
+            }
+        }
+
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
@@ -403,12 +431,12 @@
                     const renderTarget = document.getElementById('render-photo');
                     renderTarget.src = e.target.result;
                     renderTarget.style.display = 'block';
+                    autoScaleViewport();
                 }
                 reader.readAsDataURL(file);
             }
         }
 
-        // Event Intercept Tracking Listeners 
         document.getElementById('input-date').addEventListener('input', syncInvoiceData);
         document.getElementById('input-id').addEventListener('input', syncInvoiceData);
         document.getElementById('input-description').addEventListener('input', syncInvoiceData);
@@ -417,17 +445,27 @@
         document.getElementById('upload-photo').addEventListener('change', handleImageUpload);
         document.getElementById('capture-camera').addEventListener('change', handleImageUpload);
 
-        // Initial Data Frame Sync Pass Execution
+        // Run scale locking scripts across initial loading phases
+        window.addEventListener('load', autoScaleViewport);
+        window.addEventListener('resize', autoScaleViewport);
+
         syncInvoiceData();
 
-        // Image Canvas Frame Export Render Functionality
         function downloadImage() {
             const target = document.getElementById('invoice-container');
+            
+            // Temporarily lift zoom adjustments to make sure canvas outputs high-density image files
+            const currentTransform = target.style.transform;
+            target.style.transform = 'none';
+
             html2canvas(target, {
                 scale: 3, 
                 useCORS: true,
                 logging: false
             }).then(canvas => {
+                // Restore the mobile preview visual layout scaling rules immediately
+                target.style.transform = currentTransform;
+
                 const link = document.createElement('a');
                 link.download = `SingleInvoice-${document.getElementById('input-id').value || 'Draft'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
