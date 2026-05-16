@@ -2,7 +2,7 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kimny Jewelry Invoice Generator (A5 Portrait)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +24,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            -webkit-text-size-adjust: 100%; /* Fixes iPhone Safari auto font-bloating bug */
         }
 
         /* --- Unified Dashboard Navigation --- */
@@ -73,6 +74,7 @@
             max-width: 750px;
             width: 100%;
             margin-bottom: 40px;
+            box-sizing: border-box;
         }
 
         .meta-input-group {
@@ -168,7 +170,15 @@
             font-size: 14px;
         }
 
-        /* --- Invoice Preview Container (A5 Portrait Aspect Ratio) --- */
+        /* --- STABLE VIEWPORT PREVIEW SCALING SYSTEM --- */
+        .mobile-view-sandbox {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: visible;
+        }
+
         #invoice-container {
             width: 148mm;
             height: 210mm;
@@ -176,14 +186,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             overflow: hidden;
             background-color: #fff;
+            flex-shrink: 0; /* Prevents iPhone from compressing width coordinates */
+            transform-origin: top center;
         }
 
         #invoice-bg {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 148mm;  /* Lock down to explicit blueprint scale */
+            height: 210mm; /* Lock down to explicit blueprint scale */
             object-fit: fill;
             z-index: 1;
         }
@@ -256,7 +268,7 @@
                 padding: 0;
                 margin: 0;
             }
-            .admin-panel {
+            .admin-panel, .mobile-view-sandbox {
                 display: none !important;
             }
             #invoice-container {
@@ -265,6 +277,7 @@
                 position: absolute;
                 top: 0;
                 left: 0;
+                transform: none !important; /* Resets mobile zoom alterations for print output precision */
                 page-break-inside: avoid;
             }
             @page {
@@ -303,16 +316,18 @@
         <div class="grid-rows" id="input-grid"></div>
     </div>
 
-    <div id="invoice-container">
-        <img id="invoice-bg" src="invoice.jpg" alt="Invoice Template Baseline">
+    <div class="mobile-view-sandbox">
+        <div id="invoice-container">
+            <img id="invoice-bg" src="invoice.jpg" alt="Invoice Template Baseline">
 
-        <div id="invoice-content-layer">
-            <div id="pos-invoice-num" class="printable-text"></div>
-            <div id="pos-date" class="printable-text"></div>
+            <div id="invoice-content-layer">
+                <div id="pos-invoice-num" class="printable-text"></div>
+                <div id="pos-date" class="printable-text"></div>
 
-            <div id="invoice-rows-container"></div>
+                <div id="invoice-rows-container"></div>
 
-            <div id="pos-total" class="printable-text"></div>
+                <div id="pos-total" class="printable-text"></div>
+            </div>
         </div>
     </div>
 
@@ -389,25 +404,60 @@
                     grandTotal += rowTotal;
                 }
 
-                document.getElementById(`render-item-${i}`).innerText = itemVal !== "" ? itemVal : "N/A";
+                document.getElementById(`render-item-${i}`).innerText = itemVal !== "" ? itemVal : "";
                 document.getElementById(`render-qty-${i}`).innerText = qtyVal > 0 ? qtyVal : '';
                 document.getElementById(`render-price-${i}`).innerText = priceVal > 0 ? `$${priceVal.toFixed(2)}` : '';
                 document.getElementById(`render-total-${i}`).innerText = rowTotal > 0 ? `$${rowTotal.toFixed(2)}` : '';
             }
 
             document.getElementById('pos-total').innerText = grandTotal > 0 ? `$${grandTotal.toFixed(2)}` : '';
+            
+            autoScaleViewport();
+        }
+
+        function autoScaleViewport() {
+            const container = document.getElementById('invoice-container');
+            const sandbox = document.querySelector('.mobile-view-sandbox');
+            if (!container || !sandbox) return;
+
+            // Reset measurements to poll native display sizes natively
+            container.style.transform = 'none';
+            sandbox.style.height = 'auto';
+
+            const maxWidth = sandbox.offsetWidth;
+            const targetWidth = container.offsetWidth;
+
+            if (maxWidth < targetWidth) {
+                const proportionRatio = maxWidth / targetWidth;
+                container.style.transform = `scale(${proportionRatio})`;
+                // Maintain container space layout properties to prevent visual clipping bugs
+                sandbox.style.height = `${container.offsetHeight * proportionRatio}px`;
+            }
         }
 
         document.addEventListener('input', syncData);
+        
+        // Execute dynamic scaling across screen changes and rotations
+        window.addEventListener('load', autoScaleViewport);
+        window.addEventListener('resize', autoScaleViewport);
+
         syncData();
 
         function downloadImage() {
             const target = document.getElementById('invoice-container');
+            
+            // Lift scaling temporary to let html2canvas dump high quality captures
+            const currentTransform = target.style.transform;
+            target.style.transform = 'none';
+
             html2canvas(target, {
                 scale: 3, 
                 useCORS: true,
                 logging: false
             }).then(canvas => {
+                // Restore the zoom matrix layout properties instantly
+                target.style.transform = currentTransform;
+
                 const link = document.createElement('a');
                 link.download = `Invoice-${document.getElementById('input-id').value || 'Draft'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
