@@ -107,6 +107,27 @@
             font-family: 'Noto Sans Khmer', sans-serif;
         }
 
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+            font-family: 'Noto Sans Khmer', sans-serif;
+            /* Resets default browser variations */
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            appearance: none; 
+        }
+
+        /* Strips out native desktop up/down stepper arrows */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
         textarea {
             resize: vertical;
             height: 100px;
@@ -234,14 +255,14 @@
         /* Labor & Total Grid Coordinate Maps */
         #pos-labor-box {
             top: 130mm;
-            left: 35mm;
+            left: 40mm;
             width: 48mm;
             text-align: left;
         }
 
         #pos-total-box {
             top: 145mm;
-            left: 35mm;
+            left: 40mm;
             width: 48mm;
             text-align: left;
         }
@@ -272,22 +293,38 @@
         /* --- Print Mode Rule Implementations --- */
         @media print {
             body {
-                background: none;
-                padding: 0;
-                margin: 0;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
-            .admin-panel, .mobile-view-sandbox {
+            
+            /* Hide the entry panels entirely */
+            .admin-panel {
                 display: none !important;
             }
+
+            /* DO NOT hide the sandbox, just strip its layout limitations */
+            .mobile-view-sandbox {
+                display: block !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            /* Force the invoice to render back to native, unscaled pixel positions */
             #invoice-container {
-                box-shadow: none;
-                margin: 0;
-                position: absolute;
-                top: 0;
-                left: 0;
-                transform: none !important; /* Strips mobile scaling adjustments out for crystal clear prints */
+                box-shadow: none !important;
+                margin: 0 !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 148mm !important;
+                height: 210mm !important;
+                transform: none !important; /* Strips all mobile scales away */
+                display: block !important;
                 page-break-inside: avoid;
             }
+
             @page {
                 size: A5 portrait;
                 margin: 0;
@@ -326,11 +363,11 @@
         <div class="meta-input-group">
             <div class="input-block">
                 <span class="label-badge">ឈ្នួល (Labor Fee)</span>
-                <input type="text" id="input-labor" placeholder="បញ្ជូលតម្លៃឈ្នួល...">
+                <input type="number" id="input-labor" step="0.01" min="0" placeholder="0.00">
             </div>
             <div class="input-block">
                 <span class="label-badge">Total</span>
-                <input type="text" id="input-total" placeholder="បញ្ចូលតម្លៃសរុប...">
+                <input type="number" id="input-total" step="0.01" min="0" placeholder="0.00">
             </div>
         </div>
 
@@ -348,7 +385,7 @@
 
         <div class="action-btns">
             <button class="btn" onclick="downloadImage()">Download Photo</button>
-            <button class="btn" onclick="window.print()">Print</button>
+            <button class="btn" onclick="triggerCleanPrint()">Print</button>
         </div>
     </div>
 
@@ -397,8 +434,14 @@
             document.getElementById('pos-date').innerText = document.getElementById('input-date').value;
             document.getElementById('pos-invoice-num').innerText = document.getElementById('input-id').value;
             document.getElementById('pos-description-box').textContent = document.getElementById('input-description').value;
-            document.getElementById('pos-labor-box').innerText = document.getElementById('input-labor').value;
-            document.getElementById('pos-total-box').innerText = document.getElementById('input-total').value;
+            
+            // --- Updated Currency Formatter Layout Rules ---
+            const laborVal = parseFloat(document.getElementById('input-labor').value);
+            const totalVal = parseFloat(document.getElementById('input-total').value);
+
+            // If a valid number is entered, append the dollar sign to the canvas preview layer
+            document.getElementById('pos-labor-box').innerText = !isNaN(laborVal) ? `$${laborVal.toFixed(2)}` : '';
+            document.getElementById('pos-total-box').innerText = !isNaN(totalVal) ? `$${totalVal.toFixed(2)}` : '';
             
             autoScaleViewport();
         }
@@ -450,6 +493,21 @@
         window.addEventListener('resize', autoScaleViewport);
 
         syncInvoiceData();
+        
+        // Find your print call or add this helper function to your script
+        function triggerCleanPrint() {
+            const container = document.getElementById('invoice-container');
+            const currentTransform = container.style.transform;
+            
+            // Instantly strip scale so the browser catches natural A5 boundaries
+            container.style.transform = 'none';
+            
+            setTimeout(() => {
+                window.print();
+                // Put the mobile view scale back right after the print window initializes
+                container.style.transform = currentTransform;
+            }, 50);
+        }
 
         function downloadImage() {
             const target = document.getElementById('invoice-container');
